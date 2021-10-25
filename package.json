@@ -1,0 +1,24 @@
+{
+  "name": "@hubblecommerce/launcher",
+  "version": "1.0.0",
+  "description": "Setup helper for @hubblecommerce/hubble stack",
+  "author": "hubble commerce",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": "bin/install.js",
+  "dependencies": {},
+  "keywords": [
+    "hubble",
+    "hubblecommerce",
+    "PWA",
+    "ecommerce",
+    "shop",
+    "magento",
+    "shopware",
+    "xtc",
+    "frontend",
+    "interface"
+  ]
+}
