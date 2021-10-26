@@ -66,7 +66,7 @@ const clearConsole = () => {
      *
      */
 
-    const appName = process.args[0];
+    const appName = args[0];
     if(!appName) {
         console.log('Please provide an app name like: npx @hubblecommerce/hubble <project-name>');
         process.exit(-1);

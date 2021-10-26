@@ -4,6 +4,11 @@ Installs a complete predefined nuxt.js instance and the hubble PWA.
 
 See the full documentation at: https://docs.hubblecommerce.io/
 
+## Requirements
+
+Node v14.18.1
+
+
 ## Usage
 ```shell
 npx @hubblecommerce/launcher <project-name>
