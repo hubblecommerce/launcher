@@ -1,6 +1,6 @@
 {
   "name": "@hubblecommerce/launcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Setup helper for @hubblecommerce/hubble stack",
   "author": "hubble commerce",
   "license": "MIT",
@@ -8,7 +8,11 @@
     "access": "public"
   },
   "bin": "bin/install.js",
-  "dependencies": {},
+  "type": "module",
+  "dependencies": {
+    "ansi-escapes": "^5.0.0",
+    "ora": "^6.0.1"
+  },
   "keywords": [
     "hubble",
     "hubblecommerce",

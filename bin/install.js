@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-const {execSync} = require('child_process');
-const fs = require('fs').promises;
-const readline = require('readline');
-const process = require('process');
+import {execSync} from 'child_process';
+import { promises as fs } from 'fs';
+import readline from 'readline';
+import process from 'process';
+import ansiEscapes from 'ansi-escapes';
+import ora from 'ora';
 
 const runCommand = async command => {
     try {
@@ -25,13 +27,38 @@ const updateFile = async (filename, replacements) => {
             data = data.replace(replacements[0].needle, replacements[0].replacer);
         }
 
-        await fs.writeFile(filename, data, 'utf-8');
+        return await fs.writeFile(filename, data, 'utf-8');
     } catch (e) {
         console.log(e);
     }
 };
 
+const clearConsole = () => {
+    process.stdout.write(ansiEscapes.clearScreen);
+    process.stdout.write(ansiEscapes.eraseUp);
+};
+
 (async () => {
+    clearConsole();
+
+    const args = process.argv.slice(2);
+
+    const logo = '%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n' +
+        '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n' +
+        '@@@@@@@@@**#@@@@@@@@@@@@@@@@@@@@@@**#@@@@@@@@@@%**@@@@@@@@@@%**%@@@@@@@@@@@@#**++#@@@@@@@@\n' +
+        '@@@@@@@@+---@@@@@@@@@@@@@@@@@@@@@*---%@@@@@@@@@---+@@@@@@@@@=---@@@@@@@@@#=------=@@@@@@@@\n' +
+        '@@@@@@@@+---@@@@@@@@@@@@@@@@@@@@@*---#@@@@@@@@@---+@@@@@@@@@=---@@@@@@@@@@@%#=---+@@@@@@@@\n' +
+        '@@@@@@@@+---=+==+#@@@*=+%@@@*=+%@*----=--=+%@@@----=---=#@@@=---@@@%*=--=+#@@@=--@@@@@@@@@\n' +
+        '@@@@@@@@+---------*@@---+@@@---+@*-----=----+@@-----=----=@@=---@@+---++=--=@@#*@@@@@@@@@@\n' +
+        '@@@@@@@@+---%@@----@@---+@@%---+@*---*@@@+---%@---=@@@#---+@=---@*---=+++---*@@@@@@@@@@@@@\n' +
+        '@@@@@@@@+---@@@=---@@---=@@#---*@*---*@@@=---%@---=@@@*---+@=---@*----+++++*@@@@@@@@@@@@@@\n' +
+        '@@@@@@@@+---@@@=---@@*--------=@@#----------+@@----------=@@=---@@+----==--#@@@@@@@@@@@@@@\n' +
+        '@@@@@@@@%==*@@@#==*@@@%*+===+#@@@@#==*+===*%@@@%+=*+===+#@@@#==*@@@%*+===+*@@@@@@@@@@@@@@@\n' +
+        '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n' +
+        '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n';
+
+    console.log(logo);
+
     /*
      *
      * Install nuxt.js via npx create-nuxt-app and predefined answers
@@ -39,7 +66,7 @@ const updateFile = async (filename, replacements) => {
      *
      */
 
-    const appName = process.argv[2];
+    const appName = process.args[0];
     if(!appName) {
         console.log('Please provide an app name like: npx @hubblecommerce/hubble <project-name>');
         process.exit(-1);
@@ -57,11 +84,12 @@ const updateFile = async (filename, replacements) => {
             + "changing directory: " + err);
     }
 
-    console.log('Installing nuxt.js');
-
+    const installNuxtLoader = ora('Installing nuxt.js').start();
     const installNuxtCommand = `npx create-nuxt-app --answers '{"name":"my-app","language":"js","pm":"npm","ui":"none","target":"server","features":[],"linter":[],"test":"none","mode":"universal","devTools":[]}'`;
     const nuxtInstalled = await runCommand(installNuxtCommand);
     if(!nuxtInstalled) process.exit(-1);
+    installNuxtLoader.stop();
+    clearConsole();
 
     /*
      *
@@ -71,11 +99,12 @@ const updateFile = async (filename, replacements) => {
      *
      */
 
-    console.log('Installing hubble');
-
-    const installHubbleCommand = 'npm i @hubblecommerce/hubble --save-dev';
-    const hubbleInstalled = runCommand(installHubbleCommand);
-    if(!hubbleInstalled) process.exit(-1);
+    const installHubbleLoader = ora('Installing hubble').start();
+    // const installHubbleCommand = 'npm i @hubblecommerce/hubble --save-dev';
+    // const hubbleInstalled = runCommand(installHubbleCommand);
+    // if(!hubbleInstalled) process.exit(-1);
+    installHubbleLoader.stop();
+    clearConsole();
 
     /*
      *
@@ -124,6 +153,7 @@ const updateFile = async (filename, replacements) => {
 
         for (const file of paths) {
             await removeFileIfNotExists(file);
+            clearConsole();
         }
     };
 
@@ -137,21 +167,43 @@ const updateFile = async (filename, replacements) => {
      */
 
     const setEnvVariables = async function() {
+        let apiBaseUrl = args[1] || null;
+        let apiAccessKey = args[2] || null;
+
         const rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout
         });
 
-        let apiBaseUrl = null;
-        let apiAccessKey = null;
+        const question1 = () => {
+            return new Promise((resolve, reject) => {
+                rl.question('Please enter your API url: ', (url) => {
+                    apiBaseUrl = url;
+                    resolve();
+                })
+            })
+        }
 
-        rl.question("Please enter your API url: ", function(url) {
-            rl.question("Please enter your API access key: ", function(key) {
-                apiBaseUrl = url;
-                apiAccessKey = key;
-                rl.close();
-            });
-        });
+        const question2 = () => {
+            return new Promise((resolve, reject) => {
+                rl.question('Please enter your API access key: ', (key) => {
+                    apiAccessKey = key;
+                    resolve();
+                })
+            })
+        }
+
+        const askForCreds = async () => {
+            if(apiBaseUrl == null) {
+                await question1();
+            }
+
+            if(apiAccessKey == null) {
+                await question2();
+            }
+
+            rl.close();
+        }
 
         rl.on("close", async function() {
             const envFile = '.env';
@@ -177,12 +229,11 @@ const updateFile = async (filename, replacements) => {
             });
         });
 
-        for await (const line of rl) {
-            return true;
-        }
+        await askForCreds();
     };
 
     await setEnvVariables();
 
-    console.log("hubble PWA was installed successfully. \n You can start your app via: \n npm run dev");
+    clearConsole();
+    console.log("hubble PWA was installed successfully. \n \nYou can start your app via: \n \nnpm run dev");
 })();
