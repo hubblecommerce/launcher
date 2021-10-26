@@ -1,21 +1,25 @@
 #!/usr/bin/env node
 
-import {execSync} from 'child_process';
+import { exec } from 'child_process';
 import { promises as fs } from 'fs';
 import readline from 'readline';
 import process from 'process';
 import ansiEscapes from 'ansi-escapes';
 import ora from 'ora';
+import chalk from 'chalk';
 
 const runCommand = async command => {
-    try {
-        execSync(`${command}`);
-    } catch (e) {
-        console.error(`Failed to execute ${command}`, e);
-        return false;
-    }
+    return new Promise(resolve => {
+        exec(command, (err, stout, sterr) => {
+            if(err) {
+                console.log(chalk.red(`An error occurred: ${sterr}`));
+                resolve(false);
+                return false;
+            }
 
-    return true;
+            resolve(true);
+        });
+    });
 };
 
 const updateFile = async (filename, replacements) => {
@@ -61,12 +65,11 @@ const clearConsole = () => {
 
     /*
      *
-     * Install nuxt.js via npx create-nuxt-app and predefined answers
-     * https://github.com/nuxt/create-nuxt-app/issues/444
+     * Create project directory and switch process to it
      *
      */
-
     const appName = args[0];
+
     if(!appName) {
         console.log('Please provide an app name like: npx @hubblecommerce/hubble <project-name>');
         process.exit(-1);
@@ -80,16 +83,20 @@ const clearConsole = () => {
     try {
         process.chdir(appName);
     } catch (err) {
-        console.error("error occurred while "
-            + "changing directory: " + err);
+        console.error(chalk.red(`An error occurred while changing directory: ${err}`));
     }
 
-    const installNuxtLoader = ora('Installing nuxt.js').start();
+    /*
+     *
+     * Install nuxt.js via npx create-nuxt-app and predefined answers
+     * https://github.com/nuxt/create-nuxt-app/issues/444
+     *
+     */
+    const installNuxtLoader = ora(chalk.magenta('Installing hubble: setup nuxt.js')).start();
     const installNuxtCommand = `npx create-nuxt-app --answers '{"name":"my-app","language":"js","pm":"npm","ui":"none","target":"server","features":[],"linter":[],"test":"none","mode":"universal","devTools":[]}'`;
     const nuxtInstalled = await runCommand(installNuxtCommand);
     if(!nuxtInstalled) process.exit(-1);
-    installNuxtLoader.stop();
-    clearConsole();
+    installNuxtLoader.succeed();
 
     /*
      *
@@ -98,20 +105,17 @@ const clearConsole = () => {
      * see scripts/post-install.js for details
      *
      */
-
-    const installHubbleLoader = ora('Installing hubble').start();
-    // const installHubbleCommand = 'npm i @hubblecommerce/hubble --save-dev';
-    // const hubbleInstalled = runCommand(installHubbleCommand);
-    // if(!hubbleInstalled) process.exit(-1);
-    installHubbleLoader.stop();
-    clearConsole();
+    const installHubbleLoader = ora(chalk.magenta('Installing hubble: install and configure hubble via npm')).start();
+    const installHubbleCommand = 'npm i @hubblecommerce/hubble --save-dev';
+    const hubbleInstalled = await runCommand(installHubbleCommand);
+    if(!hubbleInstalled) process.exit(-1);
+    installHubbleLoader.succeed();
 
     /*
      *
      * Set hubble as module in nuxt.config.js
      *
      */
-
     const configureNuxtJs = async function() {
         const file = 'nuxt.config.js';
         const newValue = 'buildModules: [\n' +
@@ -133,15 +137,14 @@ const clearConsole = () => {
      * Remove files set by nuxt-create-app we don't need
      *
      */
-
     const removeFileIfNotExists = async function(file) {
         try {
             const data = await fs.readFile(file, 'binary');
             fs.unlink(file);
 
-            console.log(`Removed file ${file}`);
+            console.log(`${chalk.green('✔')} ${chalk.magenta(`Removed file ${file}`)}`);
         } catch (e) {
-            console.log(`File ${file} already removed. Skipping`);
+            console.log(`${chalk.green('✔')} ${chalk.magenta(`File ${file} already removed. Skipping`)}`);
         }
     };
 
@@ -153,7 +156,6 @@ const clearConsole = () => {
 
         for (const file of paths) {
             await removeFileIfNotExists(file);
-            clearConsole();
         }
     };
 
@@ -165,7 +167,6 @@ const clearConsole = () => {
      * write credentials to .env file
      *
      */
-
     const setEnvVariables = async function() {
         let apiBaseUrl = args[1] || null;
         let apiAccessKey = args[2] || null;
@@ -233,7 +234,7 @@ const clearConsole = () => {
     };
 
     await setEnvVariables();
-
     clearConsole();
-    console.log("hubble PWA was installed successfully. \n \nYou can start your app via: \n \nnpm run dev");
+
+    console.log(`hubble PWA was installed ${chalk.green('successfully')}.  \nStart your app in dev mode: \n \n${chalk.magenta('npm run dev')} \n`);
 })();
