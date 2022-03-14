@@ -118,11 +118,11 @@ const clearConsole = () => {
      */
     const configureNuxtJs = async function() {
         const file = 'nuxt.config.js';
-        const newValue = 'buildModules: [\n' +
+        const newValue = 'modules: [\n' +
             '    [\'@hubblecommerce/hubble\']';
 
         await updateFile(file, [{
-            needle: 'buildModules: [',
+            needle: 'modules: [',
             replacer: newValue
         }], function (err) {
             console.error(err);
