@@ -93,7 +93,7 @@ const clearConsole = () => {
      *
      */
     const installNuxtLoader = ora(chalk.magenta('Installing hubble: setup nuxt.js')).start();
-    const installNuxtCommand = `npx create-nuxt-app --answers '{"name":"my-app","language":"js","pm":"npm","ui":"none","target":"server","features":[],"linter":[],"test":"none","mode":"universal","devTools":[]}'`;
+    const installNuxtCommand = `npx create-nuxt-app --answers '{"name":"my-app","language":"js","pm":"npm","ui":"none","template":"html","target":"server","features":[],"linter":[],"test":"none","mode":"universal","devTools":[]}'`;
     const nuxtInstalled = await runCommand(installNuxtCommand);
     if(!nuxtInstalled) process.exit(-1);
     installNuxtLoader.succeed();
