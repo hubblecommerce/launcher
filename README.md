@@ -1,5 +1,7 @@
 # hubble PWA launcher
 
+:warning: Please note that this launcher only supports hubble PWA versions before 2.0.0
+
 Installs a complete predefined nuxt.js instance and the hubble PWA.
 
 See the full documentation at: https://docs.hubblecommerce.io/
